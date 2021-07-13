@@ -1,61 +1,84 @@
 import { NgModule } from '@angular/core';
-import { Routes, RouterModule } from '@angular/router';
-import { TasksComponent } from './standard-layout/core/tasks/tasks.component';
-import { TimeTaskComponent } from './standard-layout/core/timetask/timetask.component';
-import { TrainingOverViewComponent } from './standard-layout/core/training/training-overview.component';
-import { TrainingDetailViewComponent } from './standard-layout/core/training/components/training-detailview/training-detailview.component';
-import { WeightComponent } from './standard-layout/core/weight/weight.component';
-import { DashboardComponent } from './standard-layout/core/dashboard/dashboard.component';
-import { SessionComponent } from './standard-layout/core/session/session.component';
-import { SettingsComponent } from './standard-layout/core/settings/settings.component';
-import { ExerciseOverViewComponent } from './standard-layout/core/exercise/exercise-overview.component';
+import { Routes, RouterModule, PreloadAllModules } from '@angular/router';
+import { DashboardComponent } from './dashboard/dashboard.component';
+import { ExerciseOverViewComponent } from './exercises/exercise-overview.component';
+import { SessionComponent } from './sessions/session.component';
+import { SettingsComponent } from './settings/settings.component';
+import { TasksComponent } from './tasks/tasks.component';
+import { TimeTaskComponent } from './timetask/timetask.component';
+import { WeightComponent } from './weights/weight.component';
+
+// TODO insert to environment
+const EMPTY_STRING = '';
+const PATH_DASHBOARD = 'dashboard';
+const PATH_SETTINGS = 'settings';
+const PATH_TASKS = 'tasks';
+const PATH_TIME_TASKS = 'timetask';
+const PATH_TRAININGS = 'training';
+const PATH_EXERCISES = 'exercise';
+const PATH_SESSIONS = 'session';
+const PATH_WEIGHTS = 'weight';
 
 const routes: Routes = [
-  {
-    path: '',
-    redirectTo: 'dashboard',
-    pathMatch: 'full',
-  },
-  {
-    path: 'dashboard',
-    component: DashboardComponent,
-  },
-  {
-    path: 'settings',
-    component: SettingsComponent,
-  },
-  {
-    path: 'tasks',
-    component: TasksComponent,
-  },
-  {
-    path: 'training',
-    component: TrainingOverViewComponent,
-  },
-  {
-    path: 'training/:id',
-    component: TrainingDetailViewComponent,
-  },
-  {
-    path: 'exercise',
-    component: ExerciseOverViewComponent,
-  },
-  {
-    path: 'timetask',
-    component: TimeTaskComponent,
-  },
-  {
-    path: 'weight',
-    component: WeightComponent,
-  },
-  {
-    path: 'session',
-    component: SessionComponent,
-  },
+    {
+        path: EMPTY_STRING,
+        redirectTo: PATH_DASHBOARD,
+        pathMatch: 'full',
+    },
+    {
+        path: PATH_DASHBOARD,
+        component: DashboardComponent,
+        loadChildren: () => import('./dashboard/dashboard.module')
+            .then(m => m.DashboardModule)
+    },
+    {
+        path: PATH_SETTINGS,
+        component: SettingsComponent,
+        loadChildren: () => import('./settings/settings.module')
+            .then(m => m.SettingsModule)
+    },
+    {
+        path: PATH_TASKS,
+        component: TasksComponent,
+        loadChildren: () => import('./tasks/tasks.module')
+            .then(m => m.TasksModule)
+    },
+    {
+        path: PATH_TIME_TASKS,
+        component: TimeTaskComponent,
+        loadChildren: () => import('./timetask/timetask.module')
+            .then(m => m.TimeTaskModule)
+    },
+    {
+        path: PATH_TRAININGS,
+        loadChildren: () => import('./trainings/trainings.module')
+            .then(m => m.TrainingsOverviewModule)
+    },
+    {
+        path: PATH_EXERCISES,
+        component: ExerciseOverViewComponent,
+        loadChildren: () => import('./exercises/exercise.module')
+            .then(m => m.ExerciseModule)
+    },
+    {
+        path: PATH_SESSIONS,
+        component: SessionComponent,
+        loadChildren: () => import('./sessions/sessions.module')
+            .then(m => m.SessionModule)
+    },
+    {
+        path: PATH_WEIGHTS,
+        component: WeightComponent,
+        loadChildren: () => import('./weights/weight.module')
+            .then(m => m.WeightModule)
+    },
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes, { relativeLinkResolution: 'legacy' })],
-  exports: [RouterModule],
+    imports: [RouterModule.forRoot(routes, {
+        preloadingStrategy: PreloadAllModules,
+        relativeLinkResolution: 'legacy'
+    })],
+    exports: [RouterModule],
 })
-export class AppRoutingModule {}
+export class AppRoutingModule { }

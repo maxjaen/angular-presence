@@ -1,0 +1,38 @@
+@import '../../styles.scss';
+@import url('https://fonts.googleapis.com/css2?family=Caveat&display=swap');
+
+.content {
+  mat-card:hover {
+    background-color: $hover-gray;
+    cursor: pointer;
+  }
+
+  mat-card {
+    display: block;
+    overflow: auto;
+    float: left;
+    width: 88%;
+    margin-bottom: 20px;
+
+    .dashboard-card-content {
+      .tab-symbol {
+        font-size: 70px;
+        display: inline-block;
+        font-family: 'Caveat', cursive;
+        margin-right: 40px;
+      }
+
+      .tab-message {
+        font-size: 30px;
+        display: inline-block;
+        font-family: 'Caveat', cursive;
+      }
+    }
+  }
+
+  .material-icons {
+    vertical-align: sub;
+    font-size: 60px;
+    @extend .smallToRight;
+  }
+}

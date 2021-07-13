@@ -1,0 +1,13 @@
+import { Task } from './task';
+
+export class TimeTask {
+  id: number;
+  title: string;
+  shortDescription: string;
+  longDescription: string;
+  startDate: Date;
+  endDate: Date;
+  running?: boolean;
+  task?: Task;
+  project?: string;
+}

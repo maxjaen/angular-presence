@@ -1,0 +1,19 @@
+@import '../../styles.scss';
+
+.statistics {
+  width: 15%;
+}
+
+.block {
+  .card-left {
+    float: left;
+  }
+
+  .card-right {
+    float: right;
+  }
+}
+
+#datepicker {
+  display: none;
+}
