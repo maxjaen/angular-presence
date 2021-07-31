@@ -1,6 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Title } from '@angular/platform-browser';
+import { forkJoin } from 'rxjs/internal/observable/forkJoin';
+import { Task } from '../core/models/task';
+import { Weight } from '../core/models/weight';
+import { TimeTask } from '../core/models/timetask';
+import { Training } from '../core/models/training';
 import { Section } from '../core/models/section';
 import { Pattern } from '../core/models/enums';
 import { Settings } from '../core/models/settings';
@@ -25,7 +30,7 @@ enum SectionType {
 
 enum Module {
     TASKS = 'tasks',
-    TIMETASKS = 'timetask',
+    TIME_TASKS = 'timetask',
     SESSIONS = 'session',
     WEIGHTS = 'weight',
 }
@@ -54,14 +59,22 @@ export class DashboardComponent implements OnInit {
         this.title.setTitle(this.keyService.getKeyTranslation('d1'));
     }
 
-    ngOnInit(): void {
+    ngOnInit() {
         this.sections = this.keyService.getSections();
 
-        this.initSettings();
-        this.initTaskPlaceholder();
-        this.initTimeTaskPlaceholder();
-        this.initSessionPlaceholder();
-        this.initWeightPlaceholder();
+        forkJoin([
+            this.settingsService.getSettings(),
+            this.taskService.getTasks(),
+            this.timeTaskService.getTimeTasks(),
+            this.trainingService.getTrainings(),
+            this.weightService.getAllWeights()
+        ]).subscribe((res) => {
+            this.initializeSettings(res[0]);
+            this.addTaskPlaceholder(res[1]);
+            this.addTimeTaskPlaceholder(res[2]);
+            this.addSessionPlaceholder(res[3]);
+            this.addWeightPlaceholder(res[4]);
+        });
     }
 
     /**
@@ -117,6 +130,74 @@ export class DashboardComponent implements OnInit {
         return section.type === SectionType.GENERAL;
     }
 
+    private initializeSettings(settings: Settings[]) {
+        this.settings = first(settings);
+    }
+
+    private addWeightPlaceholder(weights: Weight[]) {
+        if (notEmpty(weights)) {
+            const lastWeight = last(weights);
+
+            this.sectionKeyValuePairs.push({
+                name: Module.WEIGHTS,
+                value: lastWeight.value,
+            });
+        }
+    }
+
+    private addSessionPlaceholder(trainings: Training[]) {
+        if (notEmpty(trainings)) {
+            const timeTrainings = trainings.filter((trainingData) => trainingData.exercises.every(
+                (exercise) => exercise.category === Pattern.CONDITIONAL1
+            )
+            );
+
+            const lastTraining = last(timeTrainings);
+            // TODO: Where does the 5 come from?
+            const value = (
+                lastTraining.exercises
+                    .map((exercise: Exercise) => +exercise.repetitions)
+                    .reduce(
+                        (sum: number, current: number) => sum + current,
+                        0
+                    ) +
+                5 * lastTraining.exercises.length
+            ).toString();
+
+            this.sectionKeyValuePairs.push({
+                name: Module.SESSIONS,
+                value,
+            });
+        }
+    }
+
+    private addTimeTaskPlaceholder(timeTasks: TimeTask[]) {
+        const value = timeTasks
+            .filter(
+                (timeTaskData) => isToday(timeTaskData.startDate) &&
+                    this.timeTaskService.isValid(timeTaskData)
+            )
+            .map((validTimeTasks) => this.timeTaskService.extractTimeBetweenStartAndEnd(
+                validTimeTasks
+            )
+            )
+            .reduce((a, b) => a + b, 0);
+
+        this.sectionKeyValuePairs.push({
+            name: Module.TIME_TASKS,
+            value: formatToHms(value),
+        });
+    }
+
+    private addTaskPlaceholder(tasks: Task[]) {
+        const value = tasks.filter((task) => task.pinned).length.toString();
+
+        this.sectionKeyValuePairs.push({
+            name: Module.TASKS,
+            value,
+        });
+    }
+
     private isSectionWithAvailableData(section: Section) {
         return (
             this.sectionKeyValuePairs &&
@@ -147,12 +228,6 @@ export class DashboardComponent implements OnInit {
         );
     }
 
-    private initSettings() {
-        this.settingsService.getSettings().subscribe((settings) => {
-            this.settings = first(settings);
-        });
-    }
-
     private initTaskPlaceholder() {
         this.taskService.getTasks().subscribe((tasks) => {
             const value = tasks.filter((task) => task.pinned).length.toString();
@@ -180,51 +255,10 @@ export class DashboardComponent implements OnInit {
                 .reduce((a, b) => a + b, 0);
 
             this.sectionKeyValuePairs.push({
-                name: Module.TIMETASKS,
+                name: Module.TIME_TASKS,
                 value: formatToHms(value),
             });
         });
     }
 
-    private initSessionPlaceholder() {
-        this.trainingService.getTrainings().subscribe((trainings) => {
-            if (notEmpty(trainings)) {
-                const timeTrainings = trainings.filter((trainingData) =>
-                    trainingData.exercises.every(
-                        (exercise) => exercise.category === Pattern.CONDITIONAL1
-                    )
-                );
-
-                const lastTraining = last(timeTrainings);
-                // TODO: Where does the 5 come from?
-                const value = (
-                    lastTraining.exercises
-                        .map((exercise: Exercise) => +exercise.repetitions)
-                        .reduce(
-                            (sum: number, current: number) => sum + current,
-                            0
-                        ) +
-                    5 * lastTraining.exercises.length
-                ).toString();
-
-                this.sectionKeyValuePairs.push({
-                    name: Module.SESSIONS,
-                    value,
-                });
-            }
-        });
-    }
-
-    private initWeightPlaceholder() {
-        this.weightService.getAllWeights().subscribe((weights) => {
-            if (notEmpty(weights)) {
-                const lastWeight = last(weights);
-
-                this.sectionKeyValuePairs.push({
-                    name: Module.WEIGHTS,
-                    value: lastWeight.value,
-                });
-            }
-        });
-    }
 }
